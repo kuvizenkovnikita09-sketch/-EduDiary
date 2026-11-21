@@ -1,0 +1,493 @@
+
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="theme-color" content="#202522">
+
+    <title>EduDiary — мой электронный дневник</title>
+
+    <link rel="stylesheet" href="css/style.css">
+</head>
+
+<body>
+
+    <!-- Фоновые эффекты -->
+    <div class="background-effects" aria-hidden="true">
+        <div class="glow glow-one"></div>
+        <div class="glow glow-two"></div>
+        <div class="glow glow-three"></div>
+        <div class="stars"></div>
+    </div>
+
+    <!-- Боковое меню -->
+    <aside class="sidebar" id="sidebar">
+
+        <div class="sidebar-header">
+            <div class="logo">
+                <span class="logo-icon">✦</span>
+                <span class="logo-text">EduDiary</span>
+            </div>
+
+            <button
+                class="sidebar-toggle"
+                id="sidebarToggle"
+                type="button"
+                aria-label="Свернуть меню"
+                aria-expanded="true"
+            >
+                ‹
+            </button>
+        </div>
+
+        <nav class="sidebar-nav">
+
+            <a href="#home" class="sidebar-link active" data-section="home">
+                <span class="nav-icon">⌂</span>
+                <span class="nav-text">Главная</span>
+            </a>
+
+            <a href="#subjects" class="sidebar-link" data-section="subjects">
+                <span class="nav-icon">▤</span>
+                <span class="nav-text">Предметы</span>
+            </a>
+
+            <a href="#grades" class="sidebar-link" data-section="grades">
+                <span class="nav-icon">✎</span>
+                <span class="nav-text">Оценки</span>
+            </a>
+
+            <a href="#forecast" class="sidebar-link" data-section="forecast">
+                <span class="nav-icon">◷</span>
+                <span class="nav-text">Прогноз</span>
+            </a>
+
+            <a href="#profile" class="sidebar-link" data-section="profile">
+                <span class="nav-icon">♙</span>
+                <span class="nav-text">Профиль</span>
+            </a>
+
+        </nav>
+
+        <div class="sidebar-bottom">
+            <div class="sidebar-note">
+                <span class="note-star">✧</span>
+                <span class="nav-text">Твой путь к успеху</span>
+            </div>
+        </div>
+
+    </aside>
+
+
+    <!-- Основное содержимое -->
+    <main class="main-content">
+
+        <!-- Верхняя панель -->
+        <header class="topbar">
+
+            <div class="topbar-info">
+                <p class="topbar-label">ТВОЙ ЛИЧНЫЙ ДНЕВНИК</p>
+                <h1>EduDiary</h1>
+            </div>
+
+            <button class="auth-open-button" id="openAuth" type="button">
+                Войти / Регистрация
+            </button>
+
+        </header>
+
+
+        <!-- Главная -->
+        <section class="page-section active" id="home">
+
+            <div class="welcome-block">
+                <p class="section-eyebrow">РАДЫ ТЕБЯ ВИДЕТЬ</p>
+                <h2>Привет! <span class="accent-text">✦</span></h2>
+                <p class="welcome-description">
+                    Здесь ты можешь следить за своими оценками,
+                    предметами и учебными успехами.
+                </p>
+            </div>
+
+            <div class="stats-grid">
+
+                <article class="stat-card">
+                    <span class="stat-icon">▤</span>
+                    <p class="stat-title">Предметы</p>
+                    <strong class="stat-value" id="subjectCount">0</strong>
+                </article>
+
+                <article class="stat-card">
+                    <span class="stat-icon">✎</span>
+                    <p class="stat-title">Оценки</p>
+                    <strong class="stat-value" id="gradeCount">0</strong>
+                </article>
+
+                <article class="stat-card">
+                    <span class="stat-icon">✧</span>
+                    <p class="stat-title">Средний балл</p>
+                    <strong class="stat-value" id="averageGrade">—</strong>
+                </article>
+
+            </div>
+
+            <div class="content-card">
+                <div class="card-heading">
+                    <div>
+                        <p class="section-eyebrow">ТВОИ РЕЗУЛЬТАТЫ</p>
+                        <h3>Последние оценки</h3>
+                    </div>
+                </div>
+
+                <div id="recentGrades" class="recent-grades">
+                    <p class="empty-message">
+                        Здесь пока пусто. Добавь свою первую оценку!
+                    </p>
+                </div>
+            </div>
+
+        </section>
+
+
+        <!-- Предметы -->
+        <section class="page-section" id="subjects">
+
+            <div class="section-heading">
+                <p class="section-eyebrow">ТВОЁ РАСПИСАНИЕ УСПЕХОВ</p>
+                <h2>Предметы</h2>
+                <p>Добавляй школьные предметы и управляй своим списком.</p>
+            </div>
+
+            <div class="content-card">
+
+                <h3>Добавить предмет</h3>
+
+                <form id="subjectForm" class="input-form">
+
+                    <input
+                        type="text"
+                        id="subjectInput"
+                        placeholder="Например, Математика"
+                        maxlength="40"
+                        required
+                    >
+
+                    <button type="submit" class="primary-button">
+                        Добавить
+                    </button>
+
+                </form>
+
+            </div>
+
+            <div class="content-card">
+                <div class="card-heading">
+                    <h3>Мои предметы</h3>
+                    <span class="small-counter" id="subjectListCount">0</span>
+                </div>
+
+                <div id="subjectList" class="subject-list">
+                    <p class="empty-message">
+                        Ты ещё не добавил(а) предметы.
+                    </p>
+                </div>
+            </div>
+
+        </section>
+
+
+        <!-- Оценки -->
+        <section class="page-section" id="grades">
+
+            <div class="section-heading">
+                <p class="section-eyebrow">ТВОИ ДОСТИЖЕНИЯ</p>
+                <h2>Оценки</h2>
+                <p>Записывай оценки и следи за своими результатами.</p>
+            </div>
+
+            <div class="content-card">
+
+                <h3>Добавить оценку</h3>
+
+                <form id="gradeForm" class="input-form vertical-form">
+
+                    <label for="gradeSubject">Предмет</label>
+
+                    <select id="gradeSubject" required>
+                        <option value="">Сначала добавь предмет</option>
+                    </select>
+
+                    <label for="gradeValue">Оценка</label>
+
+                    <select id="gradeValue" required>
+                        <option value="">Выбери оценку</option>
+                        <option value="5">5 — отлично</option>
+                        <option value="4">4 — хорошо</option>
+                        <option value="3">3 — удовлетворительно</option>
+                        <option value="2">2 — неудовлетворительно</option>
+                        <option value="1">1</option>
+                    </select>
+
+                    <label for="gradeDate">Дата</label>
+
+                    <input
+                        type="date"
+                        id="gradeDate"
+                        required
+                    >
+
+                    <button type="submit" class="primary-button">
+                        Сохранить оценку
+                    </button>
+
+                </form>
+
+            </div>
+
+            <div class="content-card">
+
+                <div class="card-heading">
+                    <h3>История оценок</h3>
+                    <span class="small-counter" id="gradeListCount">0</span>
+                </div>
+
+                <div id="gradeList" class="grade-list">
+                    <p class="empty-message">
+                        Оценок пока нет.
+                    </p>
+                </div>
+
+            </div>
+
+        </section>
+
+
+        <!-- Прогноз -->
+        <section class="page-section" id="forecast">
+
+            <div class="section-heading">
+                <p class="section-eyebrow">ТВОИ ПЕРСПЕКТИВЫ</p>
+                <h2>Прогноз</h2>
+                <p>Посмотри, какой средний балл получается сейчас.</p>
+            </div>
+
+            <div class="content-card forecast-card">
+
+                <span class="forecast-icon">✧</span>
+
+                <p class="section-eyebrow">ТЕКУЩИЙ СРЕДНИЙ БАЛЛ</p>
+
+                <div class="forecast-number" id="forecastAverage">
+                    —
+                </div>
+
+                <p id="forecastMessage" class="forecast-message">
+                    Добавь оценки, чтобы увидеть свой прогноз.
+                </p>
+
+            </div>
+
+            <div class="content-card">
+                <h3>Средний балл по предметам</h3>
+
+                <div id="subjectForecast" class="subject-forecast">
+                    <p class="empty-message">
+                        Здесь появится статистика по предметам.
+                    </p>
+                </div>
+            </div>
+
+        </section>
+
+
+        <!-- Профиль -->
+        <section class="page-section" id="profile">
+
+            <div class="section-heading">
+                <p class="section-eyebrow">ТВОЁ ПРОСТРАНСТВО</p>
+                <h2>Профиль</h2>
+                <p>Информация о твоём дневнике.</p>
+            </div>
+
+            <div class="content-card profile-card">
+
+                <div class="profile-avatar">✧</div>
+
+                <h3 id="profileName">Мой профиль</h3>
+
+                <p id="profileEmail">
+                    Войди или зарегистрируйся, чтобы настроить профиль.
+                </p>
+
+                <button
+                    class="primary-button"
+                    id="profileAuthButton"
+                    type="button"
+                >
+                    Войти / Регистрация
+                </button>
+
+            </div>
+
+            <div class="content-card">
+                <h3>О EduDiary</h3>
+
+                <p>
+                    EduDiary — личный электронный дневник,
+                    в котором можно хранить оценки, предметы
+                    и отслеживать учебные результаты.
+                </p>
+            </div>
+
+        </section>
+
+    </main>
+
+
+    <!-- Окно входа и регистрации -->
+    <div class="auth-overlay" id="authOverlay" hidden>
+
+        <div class="auth-modal">
+
+            <button
+                class="auth-close"
+                id="closeAuth"
+                type="button"
+                aria-label="Закрыть"
+            >
+                ×
+            </button>
+
+            <div class="auth-heading">
+                <span class="auth-logo">✦</span>
+                <h2>Добро пожаловать!</h2>
+                <p>Твой личный дневник EduDiary</p>
+            </div>
+
+
+            <!-- Переключение вкладок -->
+            <div class="auth-tabs">
+
+                <button
+                    class="auth-tab active"
+                    type="button"
+                    data-auth="login"
+                >
+                    Вход
+                </button>
+
+                <button
+                    class="auth-tab"
+                    type="button"
+                    data-auth="register"
+                >
+                    Регистрация
+                </button>
+
+            </div>
+
+
+            <!-- Форма входа -->
+            <form id="loginForm" class="auth-form">
+
+                <label for="loginEmail">Электронная почта</label>
+
+                <input
+                    type="email"
+                    id="loginEmail"
+                    placeholder="example@mail.com"
+                    autocomplete="email"
+                    required
+                >
+
+                <label for="loginPassword">Пароль</label>
+
+                <input
+                    type="password"
+                    id="loginPassword"
+                    placeholder="Введи пароль"
+                    autocomplete="current-password"
+                    required
+                >
+
+                <button type="submit" class="primary-button">
+                    Войти
+                </button>
+
+                <p class="auth-message" id="loginMessage"></p>
+
+            </form>
+
+
+            <!-- Форма регистрации -->
+            <form id="registerForm" class="auth-form" hidden>
+
+                <label for="registerName">Имя</label>
+
+                <input
+                    type="text"
+                    id="registerName"
+                    placeholder="Как тебя зовут?"
+                    maxlength="40"
+                    autocomplete="name"
+                    required
+                >
+
+                <label for="registerEmail">Электронная почта</label>
+
+                <input
+                    type="email"
+                    id="registerEmail"
+                    placeholder="example@mail.com"
+                    autocomplete="email"
+                    required
+                >
+
+                <label for="registerPassword">Пароль</label>
+
+                <input
+                    type="password"
+                    id="registerPassword"
+                    placeholder="Минимум 8 символов"
+                    minlength="8"
+                    autocomplete="new-password"
+                    required
+                >
+
+                <label for="registerPasswordRepeat">
+                    Повтори пароль
+                </label>
+
+                <input
+                    type="password"
+                    id="registerPasswordRepeat"
+                    placeholder="Повтори пароль"
+                    minlength="8"
+                    autocomplete="new-password"
+                    required
+                >
+
+                <button type="submit" class="primary-button">
+                    Зарегистрироваться
+                </button>
+
+                <p class="auth-message" id="registerMessage"></p>
+
+            </form>
+
+            <p class="auth-disclaimer">
+                Для настоящих аккаунтов и безопасного хранения данных
+                потребуется серверная часть.
+            </p>
+
+        </div>
+
+    </div>
+
+
+    <!-- JavaScript -->
+    <script src="script.js"></script>
+
+</body>
+</html>
