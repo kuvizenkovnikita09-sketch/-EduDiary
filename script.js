@@ -6,6 +6,10 @@ document.addEventListener("DOMContentLoaded", () => {
 
     const STORAGE_KEY = "edudiary_main";
 
+    function createId() {
+        return Date.now() + Math.floor(Math.random() * 10000);
+    }
+
     function loadData() {
         try {
             const saved = JSON.parse(localStorage.getItem(STORAGE_KEY));
@@ -14,7 +18,7 @@ document.addEventListener("DOMContentLoaded", () => {
                 return saved;
             }
         } catch (error) {
-            console.error("Ошибка загрузки:", error);
+            console.error("Ошибка загрузки данных:", error);
         }
 
         return {
@@ -28,98 +32,118 @@ document.addEventListener("DOMContentLoaded", () => {
 
     const data = loadData();
 
-    let subjects = data.subjects;
+    let subjects = data.subjects.map(subject => ({
+        ...subject,
+        id: subject.id || createId(),
+        grades: Array.isArray(subject.grades) ? subject.grades : []
+    }));
+
     let profile = data.profile || {
         name: "Мой профиль",
         email: ""
     };
 
     function saveData() {
-        localStorage.setItem(
-            STORAGE_KEY,
-            JSON.stringify({ subjects, profile })
+        try {
+            localStorage.setItem(
+                STORAGE_KEY,
+                JSON.stringify({ subjects, profile })
+            );
+        } catch (error) {
+            console.error("Не удалось сохранить данные:", error);
+            alert("Не удалось сохранить данные в браузере.");
+        }
+    }
+
+    // =====================================
+    // ПОЛУЧЕНИЕ ЭЛЕМЕНТОВ
+    // =====================================
+
+    const get = id => document.getElementById(id);
+
+    const sidebar = get("sidebar");
+    const sidebarToggle = get("sidebarToggle");
+
+    const subjectForm = get("subjectForm");
+    const subjectInput = get("subjectInput");
+    const subjectList = get("subjectList");
+    const subjectListCount = get("subjectListCount");
+
+    const gradeForm = get("gradeForm");
+    const gradeSubject = get("gradeSubject");
+    const gradeValue = get("gradeValue");
+    const gradeDate = get("gradeDate");
+    const gradeList = get("gradeList");
+    const gradeListCount = get("gradeListCount");
+
+    const subjectCount = get("subjectCount");
+    const gradeCount = get("gradeCount");
+    const averageGrade = get("averageGrade");
+
+    const recentGrades = get("recentGrades");
+    const forecastAverage = get("forecastAverage");
+    const forecastMessage = get("forecastMessage");
+    const subjectForecast = get("subjectForecast");
+
+    const profileName = get("profileName");
+    const profileEmail = get("profileEmail");
+    const profileAuthButton = get("profileAuthButton");
+
+    // =====================================
+    // ВСПОМОГАТЕЛЬНЫЕ ФУНКЦИИ
+    // =====================================
+
+    function createElement(tag, className, text) {
+        const element = document.createElement(tag);
+
+        if (className) {
+            element.className = className;
+        }
+
+        if (text !== undefined) {
+            element.textContent = text;
+        }
+
+        return element;
+    }
+
+    function formatDate(date) {
+        if (!date) return "";
+
+        const parts = date.split("-");
+
+        if (parts.length !== 3) return date;
+
+        return `${parts[2]}.${parts[1]}.${parts[0]}`;
+    }
+
+    function getAllGrades() {
+        return subjects.flatMap(subject =>
+            subject.grades.map(grade => ({
+                ...grade,
+                subjectName: subject.name,
+                subjectId: subject.id
+            }))
         );
     }
 
-    function createId() {
-        return Date.now() + Math.floor(Math.random() * 10000);
-    }
+    function getAverage(grades) {
+        if (!grades.length) return null;
 
-    function formatDate(dateString) {
-        if (!dateString) return "";
+        const sum = grades.reduce(
+            (total, grade) => total + Number(grade.value),
+            0
+        );
 
-        const parts = dateString.split("-");
-
-        return parts.length === 3
-            ? `${parts[2]}.${parts[1]}.${parts[0]}`
-            : dateString;
-    }
-
-    function getToday() {
-        const date = new Date();
-
-        return new Date(
-            date.getTime() - date.getTimezoneOffset() * 60000
-        ).toISOString().slice(0, 10);
+        return sum / grades.length;
     }
 
     // =====================================
-    // ЭЛЕМЕНТЫ HTML
-    // =====================================
-
-    const sidebar = document.getElementById("sidebar");
-    const sidebarToggle = document.getElementById("sidebarToggle");
-
-    const subjectForm = document.getElementById("subjectForm");
-    const subjectInput = document.getElementById("subjectInput");
-    const subjectList = document.getElementById("subjectList");
-    const subjectListCount = document.getElementById("subjectListCount");
-
-    const gradeForm = document.getElementById("gradeForm");
-    const gradeSubject = document.getElementById("gradeSubject");
-    const gradeValue = document.getElementById("gradeValue");
-    const gradeDate = document.getElementById("gradeDate");
-    const gradeList = document.getElementById("gradeList");
-    const gradeListCount = document.getElementById("gradeListCount");
-
-    const subjectCount = document.getElementById("subjectCount");
-    const gradeCount = document.getElementById("gradeCount");
-    const averageGrade = document.getElementById("averageGrade");
-    const recentGrades = document.getElementById("recentGrades");
-
-    const forecastAverage = document.getElementById("forecastAverage");
-    const forecastMessage = document.getElementById("forecastMessage");
-    const subjectForecast = document.getElementById("subjectForecast");
-
-    const profileName = document.getElementById("profileName");
-    const profileEmail = document.getElementById("profileEmail");
-
-    // =====================================
-    // БОКОВОЕ МЕНЮ И НАВИГАЦИЯ
+    // НАВИГАЦИЯ
     // =====================================
 
     const navigationLinks = document.querySelectorAll(".sidebar-link");
     const sections = document.querySelectorAll(".page-section");
-
-    function showSection(sectionId) {
-        sections.forEach(section => {
-            section.classList.toggle(
-                "active",
-                section.id === sectionId
-            );
-        });
-
-        navigationLinks.forEach(link => {
-            link.classList.toggle(
-                "active",
-                link.dataset.section === sectionId
-            );
-        });
-
-        if (window.innerWidth <= 800) {
-            sidebar?.classList.remove("open");
-        }
-    }
 
     navigationLinks.forEach(link => {
         link.addEventListener("click", event => {
@@ -127,40 +151,41 @@ document.addEventListener("DOMContentLoaded", () => {
 
             const sectionId = link.dataset.section;
 
-            if (sectionId) {
-                showSection(sectionId);
-                history.replaceState(null, "", `#${sectionId}`);
+            navigationLinks.forEach(item => {
+                item.classList.toggle("active", item === link);
+            });
+
+            sections.forEach(section => {
+                section.classList.toggle(
+                    "active",
+                    section.id === sectionId
+                );
+            });
+
+            history.replaceState(null, "", `#${sectionId}`);
+
+            if (window.innerWidth <= 700) {
+                sidebar?.classList.remove("collapsed");
             }
         });
     });
 
+    // =====================================
+    // СВЁРТЫВАНИЕ БОКОВОГО МЕНЮ
+    // =====================================
+
     sidebarToggle?.addEventListener("click", () => {
         sidebar?.classList.toggle("collapsed");
 
-        const expanded =
-            !sidebar?.classList.contains("collapsed");
+        const isCollapsed = sidebar?.classList.contains("collapsed");
 
         sidebarToggle.setAttribute(
             "aria-expanded",
-            String(expanded)
+            String(!isCollapsed)
         );
+
+        sidebarToggle.textContent = isCollapsed ? "›" : "‹";
     });
-
-    // =====================================
-    // ПРОФИЛЬ
-    // =====================================
-
-    function renderProfile() {
-        if (profileName) {
-            profileName.textContent = profile.name || "Мой профиль";
-        }
-
-        if (profileEmail) {
-            profileEmail.textContent = profile.email
-                ? profile.email
-                : "Войди или зарегистрируйся, чтобы настроить профиль.";
-        }
-    }
 
     // =====================================
     // ПРЕДМЕТЫ
@@ -176,12 +201,12 @@ document.addEventListener("DOMContentLoaded", () => {
             return;
         }
 
-        const alreadyExists = subjects.some(subject =>
+        const exists = subjects.some(subject =>
             subject.name.toLowerCase() === name.toLowerCase()
         );
 
-        if (alreadyExists) {
-            alert("Такой предмет уже добавлен.");
+        if (exists) {
+            alert("Такой предмет уже существует.");
             return;
         }
 
@@ -191,15 +216,14 @@ document.addEventListener("DOMContentLoaded", () => {
             grades: []
         });
 
+        saveData();
         subjectInput.value = "";
 
-        saveData();
         renderAll();
-        subjectInput.focus();
     });
 
-    function deleteSubject(id) {
-        const subject = subjects.find(item => item.id === id);
+    function deleteSubject(subjectId) {
+        const subject = subjects.find(item => item.id === subjectId);
 
         if (!subject) return;
 
@@ -209,7 +233,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
         if (!confirmed) return;
 
-        subjects = subjects.filter(item => item.id !== id);
+        subjects = subjects.filter(item => item.id !== subjectId);
 
         saveData();
         renderAll();
@@ -225,102 +249,115 @@ document.addEventListener("DOMContentLoaded", () => {
         }
 
         if (subjects.length === 0) {
-            const message = document.createElement("p");
-            message.className = "empty-message";
-            message.textContent = "Ты ещё не добавил(а) предметы.";
+            subjectList.appendChild(
+                createElement(
+                    "p",
+                    "empty-message",
+                    "Ты ещё не добавил(а) предметы."
+                )
+            );
 
-            subjectList.appendChild(message);
+            return;
         }
 
         subjects.forEach(subject => {
-            if (!Array.isArray(subject.grades)) {
-                subject.grades = [];
-            }
+            const card = createElement("article", "subject-item");
 
-            const item = document.createElement("article");
-            item.className = "subject-item";
+            const heading = createElement(
+                "div",
+                "subject-item-heading"
+            );
 
-            const heading = document.createElement("div");
-            heading.className = "subject-item-heading";
+            const name = createElement("h3", "", subject.name);
 
-            const title = document.createElement("h3");
-            title.textContent = subject.name;
+            const deleteButton = createElement(
+                "button",
+                "quiet-button",
+                "Удалить"
+            );
 
-            const deleteButton = document.createElement("button");
             deleteButton.type = "button";
-            deleteButton.className = "quiet-button";
-            deleteButton.textContent = "Удалить";
 
             deleteButton.addEventListener("click", () => {
                 deleteSubject(subject.id);
             });
 
-            heading.append(title, deleteButton);
+            heading.append(name, deleteButton);
 
-            const info = document.createElement("p");
-            info.textContent = `Количество оценок: ${subject.grades.length}`;
+            const average = getAverage(subject.grades);
 
-            item.append(heading, info);
-            subjectList.appendChild(item);
+            const info = createElement(
+                "p",
+                "subject-info",
+                average === null
+                    ? "Оценок пока нет"
+                    : `Оценок: ${subject.grades.length} · Средний балл: ${average.toFixed(2)}`
+            );
+
+            card.append(heading, info);
+            subjectList.appendChild(card);
         });
-
-        updateGradeSubjectOptions();
     }
 
     // =====================================
     // СПИСОК ПРЕДМЕТОВ В ФОРМЕ ОЦЕНОК
     // =====================================
 
-    function updateGradeSubjectOptions() {
+    function renderGradeSubjects() {
         if (!gradeSubject) return;
 
         const previousValue = gradeSubject.value;
 
         gradeSubject.replaceChildren();
 
-        const placeholder = document.createElement("option");
-        placeholder.value = "";
-        placeholder.textContent = subjects.length
-            ? "Выбери предмет"
-            : "Сначала добавь предмет";
+        const placeholder = createElement(
+            "option",
+            "",
+            subjects.length
+                ? "Выбери предмет"
+                : "Сначала добавь предмет"
+        );
 
+        placeholder.value = "";
         gradeSubject.appendChild(placeholder);
 
         subjects.forEach(subject => {
-            const option = document.createElement("option");
-            option.value = String(subject.id);
-            option.textContent = subject.name;
+            const option = createElement(
+                "option",
+                "",
+                subject.name
+            );
 
+            option.value = String(subject.id);
             gradeSubject.appendChild(option);
         });
 
-        if (subjects.some(
-            subject => String(subject.id) === previousValue
+        if (subjects.some(subject =>
+            String(subject.id) === previousValue
         )) {
             gradeSubject.value = previousValue;
         }
     }
 
     // =====================================
-    // ДОБАВЛЕНИЕ ОЦЕНОК
+    // ДОБАВЛЕНИЕ ОЦЕНКИ
     // =====================================
-
-    gradeDate.value = getToday();
 
     gradeForm?.addEventListener("submit", event => {
         event.preventDefault();
 
+        const subjectId = Number(gradeSubject.value);
+        const value = Number(gradeValue.value);
+        const date = gradeDate.value;
+
         const subject = subjects.find(
-            item => String(item.id) === gradeSubject.value
+            item => item.id === subjectId
         );
 
         if (!subject) {
             alert("Сначала выбери предмет.");
             return;
         }
-
-        const value = Number(gradeValue.value);
-        const date = gradeDate.value;
 
         if (!Number.isInteger(value) || value < 1 || value > 5) {
             alert("Выбери оценку от 1 до 5.");
@@ -338,12 +375,25 @@ document.addEventListener("DOMContentLoaded", () => {
             date
         });
 
+        saveData();
+
         gradeValue.value = "";
         gradeDate.value = getToday();
 
-        saveData();
         renderAll();
     });
+
+    function getToday() {
+        const today = new Date();
+
+        return new Date(
+            today.getTime() - today.getTimezoneOffset() * 60000
+        ).toISOString().slice(0, 10);
+    }
+
+    // =====================================
+    // УДАЛЕНИЕ ОЦЕНКИ
+    // =====================================
 
     function deleteGrade(subjectId, gradeId) {
         const subject = subjects.find(
@@ -361,26 +411,16 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
     // =====================================
-    // ИСТОРИЯ ОЦЕНОК
+    // ОТОБРАЖЕНИЕ ОЦЕНОК
     // =====================================
-
-    function getAllGrades() {
-        return subjects.flatMap(subject =>
-            subject.grades.map(grade => ({
-                ...grade,
-                subjectId: subject.id,
-                subjectName: subject.name
-            }))
-        );
-    }
 
     function renderGrades() {
         if (!gradeList) return;
 
         gradeList.replaceChildren();
 
-        const grades = getAllGrades().sort(
-            (a, b) => b.date.localeCompare(a.date)
+        const grades = getAllGrades().sort((a, b) =>
+            b.date.localeCompare(a.date)
         );
 
         if (gradeListCount) {
@@ -388,37 +428,62 @@ document.addEventListener("DOMContentLoaded", () => {
         }
 
         if (grades.length === 0) {
-            const message = document.createElement("p");
-            message.className = "empty-message";
-            message.textContent = "Оценок пока нет.";
+            gradeList.appendChild(
+                createElement(
+                    "p",
+                    "empty-message",
+                    "Оценок пока нет."
+                )
+            );
 
-            gradeList.appendChild(message);
             return;
         }
 
-        grades.forEach(grade => {
-            const row = document.createElement("div");
-            row.className = "grade-row";
+        grades.forEach(item => {
+            const row = createElement("article", "grade-row");
 
-            const subject = document.createElement("span");
-            subject.textContent = grade.subjectName;
+            const mark = createElement(
+                "strong",
+                "grade-mark",
+                item.value
+            );
 
-            const mark = document.createElement("strong");
-            mark.textContent = grade.value;
+            const info = createElement("div", "grade-info");
 
-            const date = document.createElement("span");
-            date.textContent = formatDate(grade.date);
+            const subject = createElement(
+                "span",
+                "grade-subject",
+                item.subjectName
+            );
 
-            const remove = document.createElement("button");
+            const label = createElement(
+                "span",
+                "grade-label",
+                "Оценка по предмету"
+            );
+
+            info.append(subject, label);
+
+            const date = createElement(
+                "span",
+                "grade-date",
+                formatDate(item.date)
+            );
+
+            const remove = createElement(
+                "button",
+                "quiet-button",
+                "×"
+            );
+
             remove.type = "button";
-            remove.className = "quiet-button";
-            remove.textContent = "Удалить";
+            remove.setAttribute("aria-label", "Удалить оценку");
 
             remove.addEventListener("click", () => {
-                deleteGrade(grade.subjectId, grade.id);
+                deleteGrade(item.subjectId, item.id);
             });
 
-            row.append(subject, mark, date, remove);
+            row.append(mark, info, date, remove);
             gradeList.appendChild(row);
         });
     }
@@ -437,27 +502,40 @@ document.addEventListener("DOMContentLoaded", () => {
             .slice(0, 5);
 
         if (grades.length === 0) {
-            const message = document.createElement("p");
-            message.className = "empty-message";
-            message.textContent =
-                "Здесь пока пусто. Добавь свою первую оценку!";
+            recentGrades.appendChild(
+                createElement(
+                    "p",
+                    "empty-message",
+                    "Здесь пока пусто. Добавь свою первую оценку!"
+                )
+            );
 
-            recentGrades.appendChild(message);
             return;
         }
 
-        grades.forEach(grade => {
-            const row = document.createElement("div");
-            row.className = "recent-grade-row";
+        grades.forEach(item => {
+            const row = createElement(
+                "div",
+                "recent-grade-row"
+            );
 
-            const subject = document.createElement("span");
-            subject.textContent = grade.subjectName;
+            const subject = createElement(
+                "span",
+                "recent-grade-subject",
+                item.subjectName
+            );
 
-            const mark = document.createElement("strong");
-            mark.textContent = grade.value;
+            const mark = createElement(
+                "strong",
+                "grade-mark",
+                item.value
+            );
 
-            const date = document.createElement("span");
-            date.textContent = formatDate(grade.date);
+            const date = createElement(
+                "span",
+                "recent-grade-date",
+                formatDate(item.date)
+            );
 
             row.append(subject, mark, date);
             recentGrades.appendChild(row);
@@ -470,15 +548,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
     function updateStatistics() {
         const grades = getAllGrades();
-
-        const sum = grades.reduce(
-            (total, grade) => total + grade.value,
-            0
-        );
-
-        const average = grades.length
-            ? sum / grades.length
-            : null;
+        const average = getAverage(grades);
 
         if (subjectCount) {
             subjectCount.textContent = subjects.length;
@@ -493,23 +563,6 @@ document.addEventListener("DOMContentLoaded", () => {
                 ? "—"
                 : average.toFixed(2);
         }
-    }
-
-    // =====================================
-    // ПРОГНОЗ
-    // =====================================
-
-    function renderForecast() {
-        const grades = getAllGrades();
-
-        const sum = grades.reduce(
-            (total, grade) => total + grade.value,
-            0
-        );
-
-        const average = grades.length
-            ? sum / grades.length
-            : null;
 
         if (forecastAverage) {
             forecastAverage.textContent = average === null
@@ -521,137 +574,163 @@ document.addEventListener("DOMContentLoaded", () => {
             if (average === null) {
                 forecastMessage.textContent =
                     "Добавь оценки, чтобы увидеть свой прогноз.";
+            } else if (average >= 4.5) {
+                forecastMessage.textContent =
+                    "Отличный результат! Продолжай в том же духе.";
+            } else if (average >= 3.5) {
+                forecastMessage.textContent =
+                    "Хороший результат. Продолжай заниматься!";
+            } else if (average >= 2.5) {
+                forecastMessage.textContent =
+                    "Есть возможность улучшить результат.";
             } else {
                 forecastMessage.textContent =
-                    `Сейчас твой средний балл: ${average.toFixed(2)} из 5.`;
+                    "Продолжай учиться, шаг за шагом результат станет лучше.";
             }
         }
+    }
 
+    // =====================================
+    // ПРОГНОЗ ПО ПРЕДМЕТАМ
+    // =====================================
+
+    function renderSubjectForecast() {
         if (!subjectForecast) return;
 
         subjectForecast.replaceChildren();
 
         if (subjects.length === 0) {
-            const message = document.createElement("p");
-            message.className = "empty-message";
-            message.textContent =
-                "Здесь появится статистика по предметам.";
+            subjectForecast.appendChild(
+                createElement(
+                    "p",
+                    "empty-message",
+                    "Здесь появится статистика по предметам."
+                )
+            );
 
-            subjectForecast.appendChild(message);
             return;
         }
 
         subjects.forEach(subject => {
-            const row = document.createElement("div");
-            row.className = "subject-forecast-row";
+            const row = createElement(
+                "div",
+                "forecast-item"
+            );
 
-            const name = document.createElement("span");
-            name.textContent = subject.name;
+            const name = createElement(
+                "span",
+                "forecast-subject-name",
+                subject.name
+            );
 
-            const subjectGrades = subject.grades || [];
+            const average = getAverage(subject.grades);
 
-            const subjectAverage = subjectGrades.length
-                ? subjectGrades.reduce(
-                    (total, grade) => total + grade.value,
-                    0
-                ) / subjectGrades.length
-                : null;
+            const value = createElement(
+                "strong",
+                "forecast-subject-average",
+                average === null ? "—" : average.toFixed(2)
+            );
 
-            const result = document.createElement("strong");
-            result.textContent = subjectAverage === null
-                ? "Нет оценок"
-                : subjectAverage.toFixed(2);
-
-            row.append(name, result);
+            row.append(name, value);
             subjectForecast.appendChild(row);
         });
     }
 
     // =====================================
-    // ОКНО ВХОДА И РЕГИСТРАЦИИ
+    // ПРОФИЛЬ
     // =====================================
 
-    const authOverlay = document.getElementById("authOverlay");
-    const openAuth = document.getElementById("openAuth");
-    const profileAuthButton = document.getElementById("profileAuthButton");
-    const closeAuth = document.getElementById("closeAuth");
+    function renderProfile() {
+        if (profileName) {
+            profileName.textContent = profile.name || "Мой профиль";
+        }
+
+        if (profileEmail) {
+            profileEmail.textContent = profile.email
+                ? profile.email
+                : "Войди или зарегистрируйся, чтобы настроить профиль.";
+        }
+    }
+
+    // =====================================
+    // ОКНО АВТОРИЗАЦИИ
+    // =====================================
+
+    const authOverlay = get("authOverlay");
+    const openAuth = get("openAuth");
+    const closeAuth = get("closeAuth");
+
+    const loginForm = get("loginForm");
+    const registerForm = get("registerForm");
+
+    const loginMessage = get("loginMessage");
+    const registerMessage = get("registerMessage");
 
     const authTabs = document.querySelectorAll(".auth-tab");
-    const loginForm = document.getElementById("loginForm");
-    const registerForm = document.getElementById("registerForm");
 
-    const loginMessage = document.getElementById("loginMessage");
-    const registerMessage = document.getElementById("registerMessage");
+    function showAuth() {
+        if (!authOverlay) return;
 
-    function openAuthWindow() {
-        if (authOverlay) {
-            authOverlay.hidden = false;
-        }
+        authOverlay.hidden = false;
+        switchAuth("login");
     }
 
-    function closeAuthWindow() {
-        if (authOverlay) {
-            authOverlay.hidden = true;
-        }
+    function hideAuth() {
+        if (!authOverlay) return;
+
+        authOverlay.hidden = true;
     }
 
-    openAuth?.addEventListener("click", openAuthWindow);
-    profileAuthButton?.addEventListener("click", openAuthWindow);
-    closeAuth?.addEventListener("click", closeAuthWindow);
+    function switchAuth(mode) {
+        const isLogin = mode === "login";
+
+        if (loginForm) loginForm.hidden = !isLogin;
+        if (registerForm) registerForm.hidden = isLogin;
+
+        authTabs.forEach(tab => {
+            tab.classList.toggle(
+                "active",
+                tab.dataset.auth === mode
+            );
+        });
+    }
+
+    openAuth?.addEventListener("click", showAuth);
+    profileAuthButton?.addEventListener("click", showAuth);
+    closeAuth?.addEventListener("click", hideAuth);
 
     authOverlay?.addEventListener("click", event => {
         if (event.target === authOverlay) {
-            closeAuthWindow();
+            hideAuth();
         }
     });
 
     document.addEventListener("keydown", event => {
-        if (event.key === "Escape") {
-            closeAuthWindow();
+        if (event.key === "Escape" && authOverlay && !authOverlay.hidden) {
+            hideAuth();
         }
     });
-
-    function switchAuthTab(tabName) {
-        authTabs.forEach(tab => {
-            tab.classList.toggle(
-                "active",
-                tab.dataset.auth === tabName
-            );
-        });
-
-        if (loginForm) {
-            loginForm.hidden = tabName !== "login";
-        }
-
-        if (registerForm) {
-            registerForm.hidden = tabName !== "register";
-        }
-
-        if (loginMessage) loginMessage.textContent = "";
-        if (registerMessage) registerMessage.textContent = "";
-    }
 
     authTabs.forEach(tab => {
         tab.addEventListener("click", () => {
-            switchAuthTab(tab.dataset.auth);
+            switchAuth(tab.dataset.auth);
         });
     });
 
-    // Регистрация в демонстрационном режиме.
-    // Пароль намеренно не сохраняется в браузере.
+    // =====================================
+    // РЕГИСТРАЦИЯ — ДЕМО-РЕЖИМ
+    // =====================================
 
     registerForm?.addEventListener("submit", event => {
         event.preventDefault();
 
-        const name = document.getElementById("registerName").value.trim();
-        const email = document.getElementById("registerEmail").value.trim();
-        const password = document.getElementById("registerPassword").value;
-        const repeatPassword =
-            document.getElementById("registerPasswordRepeat").value;
+        const name = get("registerName")?.value.trim();
+        const email = get("registerEmail")?.value.trim();
+        const password = get("registerPassword")?.value;
+        const repeatPassword = get("registerPasswordRepeat")?.value;
 
         if (!name || !email || !password || !repeatPassword) {
-            registerMessage.textContent =
-                "Заполни все поля.";
+            registerMessage.textContent = "Заполни все поля.";
             return;
         }
 
@@ -662,61 +741,62 @@ document.addEventListener("DOMContentLoaded", () => {
         }
 
         if (password !== repeatPassword) {
-            registerMessage.textContent =
-                "Пароли не совпадают.";
+            registerMessage.textContent = "Пароли не совпадают.";
             return;
         }
 
-        profile = { name, email };
+        profile.name = name;
+        profile.email = email;
 
         saveData();
         renderProfile();
 
         registerMessage.textContent =
-            "Профиль создан в демонстрационном режиме!";
+            "Данные профиля сохранены. Для настоящей регистрации нужно подключить сервер.";
 
         registerForm.reset();
     });
 
-    // Настоящая проверка аккаунта требует серверной части.
+    // =====================================
+    // ВХОД — ДЕМО-РЕЖИМ
+    // =====================================
 
     loginForm?.addEventListener("submit", event => {
         event.preventDefault();
 
-        const email = document.getElementById("loginEmail").value.trim();
+        const email = get("loginEmail")?.value.trim();
+        const password = get("loginPassword")?.value;
 
-        if (profile.email && profile.email === email) {
+        if (!email || !password) {
             loginMessage.textContent =
-                "Профиль найден на этом устройстве. Для настоящего входа нужен сервер.";
-        } else {
-            loginMessage.textContent =
-                "Это демонстрационная версия. Настоящий вход появится после подключения сервера.";
+                "Заполни электронную почту и пароль.";
+            return;
         }
+
+        loginMessage.textContent =
+            "Форма заполнена. Для настоящего входа нужно подключить сервер.";
     });
 
     // =====================================
-    // ОБНОВЛЕНИЕ СТРАНИЦЫ
+    // ОБНОВЛЕНИЕ ВСЕЙ СТРАНИЦЫ
     // =====================================
 
     function renderAll() {
         renderSubjects();
+        renderGradeSubjects();
         renderGrades();
         renderRecentGrades();
         updateStatistics();
-        renderForecast();
+        renderSubjectForecast();
         renderProfile();
     }
 
-    // Начальная настройка
+    // =====================================
+    // ПЕРВЫЙ ЗАПУСК
+    // =====================================
 
     if (gradeDate) {
         gradeDate.value = getToday();
-    }
-
-    const initialSection = window.location.hash.slice(1);
-
-    if (initialSection && document.getElementById(initialSection)) {
-        showSection(initialSection);
     }
 
     renderAll();
